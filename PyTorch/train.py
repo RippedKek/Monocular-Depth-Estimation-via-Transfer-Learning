@@ -19,6 +19,7 @@ def main():
     parser.add_argument('--epochs', default=20, type=int, help='number of total epochs to run')
     parser.add_argument('--lr', '--learning-rate', default=0.0001, type=float, help='initial learning rate')
     parser.add_argument('--bs', default=4, type=int, help='batch size')
+    parser.add_argument('--color-aug', action='store_true', help='enable color augmentation during training')
     args = parser.parse_args()
 
     # Create model
@@ -31,7 +32,7 @@ def main():
     prefix = 'densenet_' + str(batch_size)
 
     # Load data
-    train_loader, test_loader = getTrainingTestingData(batch_size=batch_size)
+    train_loader, test_loader = getTrainingTestingData(batch_size=batch_size, color_aug=args.color_aug)
 
     # Logging
     writer = SummaryWriter(comment='{}-lr{}-e{}-bs{}'.format(prefix, args.lr, args.epochs, args.bs), flush_secs=30)

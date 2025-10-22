@@ -45,6 +45,19 @@ class RandomChannelSwap(object):
             image = Image.fromarray(image[...,list(self.indices[random.randint(0, len(self.indices) - 1)])])
         return {'image': image, 'depth': depth}
 
+
+class ColorJitterSample(object):
+    """Wrapper to apply torchvision ColorJitter to the 'image' field of a sample dict."""
+    def __init__(self, brightness=0.4, contrast=0.4, saturation=0.4, hue=0.1):
+        self.jitter = transforms.ColorJitter(brightness=brightness, contrast=contrast, saturation=saturation, hue=hue)
+
+    def __call__(self, sample):
+        image, depth = sample['image'], sample['depth']
+        if not _is_pil_image(image):
+            raise TypeError('ColorJitterSample expects PIL Image for sample["image"]. Got {}'.format(type(image)))
+        image = self.jitter(image)
+        return {'image': image, 'depth': depth}
+
 def loadZipToMem(zip_file):
     # Load zip file into memory
     print('Loading dataset zip file...', end='')
@@ -143,17 +156,34 @@ def getNoTransform(is_test=False):
         ToTensor(is_test=is_test)
     ])
 
-def getDefaultTrainTransform():
-    return transforms.Compose([
+def getDefaultTrainTransform(color_aug=False):
+    """Return the training transform pipeline.
+
+    If color_aug is True, apply a torchvision.transforms.ColorJitter
+    between the random channel swaps and the ToTensor conversion.
+    """
+    pipeline = [
         RandomHorizontalFlip(),
         RandomChannelSwap(0.5),
-        ToTensor()
-    ])
+    ]
 
-def getTrainingTestingData(batch_size):
+    if color_aug:
+        # Moderate defaults — tune as needed
+        pipeline.append(ColorJitterSample(brightness=0.4, contrast=0.4, saturation=0.4, hue=0.1))
+
+    pipeline.append(ToTensor())
+    return transforms.Compose(pipeline)
+
+def getTrainingTestingData(batch_size, color_aug=False):
+    """Load dataset from nyu_data.zip into memory and return train/test DataLoaders.
+
+    Args:
+        batch_size (int): batch size for DataLoader
+        color_aug (bool): whether to enable ColorJitter augmentation in the training pipeline
+    """
     data, nyu2_train = loadZipToMem('nyu_data.zip')
 
-    transformed_training = depthDatasetMemory(data, nyu2_train, transform=getDefaultTrainTransform())
+    transformed_training = depthDatasetMemory(data, nyu2_train, transform=getDefaultTrainTransform(color_aug=color_aug))
     transformed_testing = depthDatasetMemory(data, nyu2_train, transform=getNoTransform())
 
     return DataLoader(transformed_training, batch_size, shuffle=True), DataLoader(transformed_testing, batch_size, shuffle=False)
