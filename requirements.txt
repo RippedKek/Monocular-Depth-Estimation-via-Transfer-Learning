@@ -1,0 +1,20 @@
+# Minimal requirements for the DenseDepth repository (unpinned)
+# Add version pins if you need reproducible environments (e.g. tensorflow==2.4.1)
+
+tensorflow
+keras
+numpy
+Pillow
+scikit-image
+matplotlib
+scipy
+opencv-python
+PySide2
+PyOpenGL
+PyGLM
+scikit-learn
+h5py
+pandas
+torch
+torchvision
+tensorboardX
