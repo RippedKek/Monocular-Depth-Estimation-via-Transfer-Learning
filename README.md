@@ -1,6 +1,6 @@
 ## Experiments Ran
 
-As this paper was experimented on huge datasets like NYU Dataset, we took a chunk of it and ran the experiment for 5 epochs, batch size 4. The experiment was ran on RTX 4050 laptop GPU. This is the config for the first run. The dataset only had images of classrooms rather than various indoor scenaries. After this run, we will run some ablation studies on this codebase.
+As this paper was experimented on huge datasets like NYU Dataset, we took a chunk of it and ran the experiment for 5 epochs, batch size 4. The experiment was ran on RTX 4050 laptop GPU. This is the config for the first run. The dataset only had images of classrooms rather than various indoor scenaries. The second run was done using color augmentation. This paper explicitly mentioned the absence of color augmentation effects on the result. We ran with color augmentation for 5 epochs and saw degrading results from the default run.
 
 **Note that this codebase is being run on PyTorch. So train the dataset from the `PyTorch` directory**
 
