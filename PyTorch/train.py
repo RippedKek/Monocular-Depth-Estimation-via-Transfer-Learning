@@ -20,6 +20,9 @@ def main():
     parser.add_argument('--lr', '--learning-rate', default=0.0001, type=float, help='initial learning rate')
     parser.add_argument('--bs', default=4, type=int, help='batch size')
     parser.add_argument('--color-aug', action='store_true', help='enable color augmentation during training')
+    parser.add_argument('--scheduler', choices=['none','cosine'], default='none', help='learning rate scheduler to use')
+    parser.add_argument('--t-max', default=None, type=int, help='T_max for CosineAnnealingLR (number of epochs)')
+    parser.add_argument('--eta-min', default=0.0, type=float, help='eta_min for CosineAnnealingLR')
     args = parser.parse_args()
 
     # Create model
@@ -30,6 +33,12 @@ def main():
     optimizer = torch.optim.Adam( model.parameters(), args.lr )
     batch_size = args.bs
     prefix = 'densenet_' + str(batch_size)
+
+    # Optionally create LR scheduler
+    scheduler = None
+    if args.scheduler == 'cosine':
+        t_max = args.t_max if args.t_max is not None else args.epochs
+        scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=t_max, eta_min=args.eta_min)
 
     # Load data
     train_loader, test_loader = getTrainingTestingData(batch_size=batch_size, color_aug=args.color_aug)
@@ -99,6 +108,12 @@ def main():
         # Record epoch's intermediate results
         LogProgress(model, writer, test_loader, niter)
         writer.add_scalar('Train/Loss.avg', losses.avg, epoch)
+
+        # Log current LR and step scheduler at epoch boundary
+        if scheduler is not None:
+            current_lr = optimizer.param_groups[0]['lr']
+            writer.add_scalar('Train/LR', current_lr, epoch)
+            scheduler.step()
 
 def LogProgress(model, writer, test_loader, epoch):
     model.eval()
